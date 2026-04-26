@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "RR Plastic Management System"
+version = "1.0.0"
+id = "artifacts/rr-plastic"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23899
+
+[services.development]
+run = "pnpm --filter @workspace/rr-plastic run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/rr-plastic", "run", "build" ]
+publicDir = "artifacts/rr-plastic/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23899"
+BASE_PATH = "/"

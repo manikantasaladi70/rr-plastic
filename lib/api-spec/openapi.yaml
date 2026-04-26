@@ -1,22 +1,45 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: RR Plastic Management System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: dashboard
+    description: Dashboard summary
+  - name: materials
+    description: Material management
+  - name: stock-in
+    description: Stock in operations
+  - name: stock-out
+    description: Stock out operations
+  - name: employees
+    description: Employee management
+  - name: attendance
+    description: Attendance tracking
+  - name: salary
+    description: Salary reports
+  - name: customers
+    description: Customer management
+  - name: production
+    description: Production tracking
+  - name: delivery-challans
+    description: Delivery challan management
+  - name: reports
+    description: Reports
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +47,1450 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with username and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user info
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/low-stock:
+    get:
+      operationId: getDashboardLowStock
+      tags: [dashboard]
+      summary: Get low stock alerts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Low stock items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Material"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getDashboardRecentActivity
+      tags: [dashboard]
+      summary: Get recent stock activity
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecentActivity"
+
+  /materials:
+    get:
+      operationId: listMaterials
+      tags: [materials]
+      summary: List all materials
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of materials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Material"
+    post:
+      operationId: createMaterial
+      tags: [materials]
+      summary: Create a material
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMaterialBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Material"
+
+  /materials/{id}:
+    get:
+      operationId: getMaterial
+      tags: [materials]
+      summary: Get a material by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Material
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Material"
+    put:
+      operationId: updateMaterial
+      tags: [materials]
+      summary: Update a material
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMaterialBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Material"
+    delete:
+      operationId: deleteMaterial
+      tags: [materials]
+      summary: Delete a material
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /stock-in:
+    get:
+      operationId: listStockIn
+      tags: [stock-in]
+      summary: List stock in records
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+        - name: materialId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of stock in records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockIn"
+    post:
+      operationId: createStockIn
+      tags: [stock-in]
+      summary: Create a stock in record
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStockInBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockIn"
+
+  /stock-in/{id}:
+    put:
+      operationId: updateStockIn
+      tags: [stock-in]
+      summary: Update a stock in record
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStockInBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockIn"
+    delete:
+      operationId: deleteStockIn
+      tags: [stock-in]
+      summary: Delete a stock in record
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /stock-out:
+    get:
+      operationId: listStockOut
+      tags: [stock-out]
+      summary: List stock out records
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+        - name: materialId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of stock out records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockOut"
+    post:
+      operationId: createStockOut
+      tags: [stock-out]
+      summary: Create a stock out record
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStockOutBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockOut"
+        "400":
+          description: Insufficient stock
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stock-out/{id}:
+    put:
+      operationId: updateStockOut
+      tags: [stock-out]
+      summary: Update a stock out record
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStockOutBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockOut"
+    delete:
+      operationId: deleteStockOut
+      tags: [stock-out]
+      summary: Delete a stock out record
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /employees:
+    get:
+      operationId: listEmployees
+      tags: [employees]
+      summary: List all employees
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of employees
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Employee"
+    post:
+      operationId: createEmployee
+      tags: [employees]
+      summary: Create an employee
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEmployeeBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+
+  /employees/{id}:
+    get:
+      operationId: getEmployee
+      tags: [employees]
+      summary: Get an employee by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+    put:
+      operationId: updateEmployee
+      tags: [employees]
+      summary: Update an employee
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEmployeeBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+    delete:
+      operationId: deleteEmployee
+      tags: [employees]
+      summary: Delete an employee
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /attendance:
+    get:
+      operationId: listAttendance
+      tags: [attendance]
+      summary: List attendance records
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: employeeId
+          in: query
+          schema:
+            type: integer
+        - name: month
+          in: query
+          schema:
+            type: integer
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - name: date
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of attendance records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Attendance"
+    post:
+      operationId: createAttendance
+      tags: [attendance]
+      summary: Create or update attendance
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAttendanceBody"
+      responses:
+        "200":
+          description: Attendance saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attendance"
+
+  /attendance/{id}:
+    delete:
+      operationId: deleteAttendance
+      tags: [attendance]
+      summary: Delete attendance record
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /salary/report:
+    get:
+      operationId: getSalaryReport
+      tags: [salary]
+      summary: Get monthly salary report for all employees
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Salary report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SalaryReportItem"
+
+  /customers:
+    get:
+      operationId: listCustomers
+      tags: [customers]
+      summary: List all customers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Create a customer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get a customer by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    put:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update a customer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    delete:
+      operationId: deleteCustomer
+      tags: [customers]
+      summary: Delete a customer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /customers/{id}/summary:
+    get:
+      operationId: getCustomerSummary
+      tags: [customers]
+      summary: Get customer material/production summary
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerSummary"
+
+  /production:
+    get:
+      operationId: listProduction
+      tags: [production]
+      summary: List production records
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of production records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Production"
+    post:
+      operationId: createProduction
+      tags: [production]
+      summary: Create a production record
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductionBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Production"
+
+  /production/{id}:
+    put:
+      operationId: updateProduction
+      tags: [production]
+      summary: Update a production record
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductionBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Production"
+    delete:
+      operationId: deleteProduction
+      tags: [production]
+      summary: Delete a production record
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /delivery-challans:
+    get:
+      operationId: listDeliveryChallans
+      tags: [delivery-challans]
+      summary: List delivery challans
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of delivery challans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeliveryChallan"
+    post:
+      operationId: createDeliveryChallan
+      tags: [delivery-challans]
+      summary: Create a delivery challan
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDeliveryChallanBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryChallan"
+
+  /delivery-challans/{id}:
+    get:
+      operationId: getDeliveryChallan
+      tags: [delivery-challans]
+      summary: Get a delivery challan by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Delivery challan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryChallan"
+    put:
+      operationId: updateDeliveryChallan
+      tags: [delivery-challans]
+      summary: Update a delivery challan
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDeliveryChallanBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryChallan"
+    delete:
+      operationId: deleteDeliveryChallan
+      tags: [delivery-challans]
+      summary: Delete a delivery challan
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /reports/monthly:
+    get:
+      operationId: getMonthlyReport
+      tags: [reports]
+      summary: Get monthly report
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Monthly report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonthlyReport"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    LoginBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required: [token, user]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        role:
+          type: string
+          enum: [admin, store]
+      required: [id, username, role]
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalMaterials:
+          type: integer
+        totalStockInToday:
+          type: number
+        totalStockOutToday:
+          type: number
+        lowStockCount:
+          type: integer
+        presentToday:
+          type: integer
+        absentToday:
+          type: integer
+        totalEmployees:
+          type: integer
+        totalCustomers:
+          type: integer
+        totalChallansToday:
+          type: integer
+      required:
+        - totalMaterials
+        - totalStockInToday
+        - totalStockOutToday
+        - lowStockCount
+        - presentToday
+        - absentToday
+        - totalEmployees
+        - totalCustomers
+        - totalChallansToday
+
+    RecentActivity:
+      type: object
+      properties:
+        stockIn:
+          type: array
+          items:
+            $ref: "#/components/schemas/StockIn"
+        stockOut:
+          type: array
+          items:
+            $ref: "#/components/schemas/StockOut"
+        challans:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeliveryChallan"
+      required: [stockIn, stockOut, challans]
+
+    Material:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        unit:
+          type: string
+        currentStock:
+          type: number
+        lowStockThreshold:
+          type: number
+        createdAt:
+          type: string
+      required: [id, name, unit, currentStock, lowStockThreshold, createdAt]
+
+    CreateMaterialBody:
+      type: object
+      properties:
+        name:
+          type: string
+        unit:
+          type: string
+        currentStock:
+          type: number
+        lowStockThreshold:
+          type: number
+      required: [name, unit, currentStock, lowStockThreshold]
+
+    StockIn:
+      type: object
+      properties:
+        id:
+          type: integer
+        materialId:
+          type: integer
+        materialName:
+          type: string
+        quantity:
+          type: number
+        date:
+          type: string
+        supplier:
+          type: string
+        remarks:
+          type: string
+        createdAt:
+          type: string
+      required: [id, materialId, materialName, quantity, date, createdAt]
+
+    CreateStockInBody:
+      type: object
+      properties:
+        materialId:
+          type: integer
+        quantity:
+          type: number
+        date:
+          type: string
+        supplier:
+          type: string
+        remarks:
+          type: string
+      required: [materialId, quantity, date]
+
+    StockOut:
+      type: object
+      properties:
+        id:
+          type: integer
+        materialId:
+          type: integer
+        materialName:
+          type: string
+        quantity:
+          type: number
+        date:
+          type: string
+        purpose:
+          type: string
+        remarks:
+          type: string
+        createdAt:
+          type: string
+      required: [id, materialId, materialName, quantity, date, createdAt]
+
+    CreateStockOutBody:
+      type: object
+      properties:
+        materialId:
+          type: integer
+        quantity:
+          type: number
+        date:
+          type: string
+        purpose:
+          type: string
+        remarks:
+          type: string
+      required: [materialId, quantity, date]
+
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        role:
+          type: string
+        phone:
+          type: string
+        dailySalary:
+          type: number
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, name, role, phone, dailySalary, isActive, createdAt]
+
+    CreateEmployeeBody:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+        phone:
+          type: string
+        dailySalary:
+          type: number
+        isActive:
+          type: boolean
+      required: [name, role, phone, dailySalary]
+
+    Attendance:
+      type: object
+      properties:
+        id:
+          type: integer
+        employeeId:
+          type: integer
+        employeeName:
+          type: string
+        date:
+          type: string
+        status:
+          type: string
+          enum: [P, A, H, L]
+        createdAt:
+          type: string
+      required: [id, employeeId, employeeName, date, status, createdAt]
+
+    CreateAttendanceBody:
+      type: object
+      properties:
+        employeeId:
+          type: integer
+        date:
+          type: string
+        status:
+          type: string
+          enum: [P, A, H, L]
+      required: [employeeId, date, status]
+
+    SalaryReportItem:
+      type: object
+      properties:
+        employeeId:
+          type: integer
+        employeeName:
+          type: string
+        role:
+          type: string
+        dailySalary:
+          type: number
+        totalDays:
+          type: integer
+        presentDays:
+          type: integer
+        halfDays:
+          type: integer
+        absentDays:
+          type: integer
+        leaveDays:
+          type: integer
+        finalSalary:
+          type: number
+      required:
+        - employeeId
+        - employeeName
+        - role
+        - dailySalary
+        - totalDays
+        - presentDays
+        - halfDays
+        - absentDays
+        - leaveDays
+        - finalSalary
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        gst:
+          type: string
+        address:
+          type: string
+        createdAt:
+          type: string
+      required: [id, name, phone, createdAt]
+
+    CreateCustomerBody:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        gst:
+          type: string
+        address:
+          type: string
+      required: [name, phone]
+
+    CustomerSummary:
+      type: object
+      properties:
+        customerId:
+          type: integer
+        customerName:
+          type: string
+        totalMaterialIssued:
+          type: number
+        totalProductionReceived:
+          type: number
+        balance:
+          type: number
+      required: [customerId, customerName, totalMaterialIssued, totalProductionReceived, balance]
+
+    Production:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: integer
+        customerName:
+          type: string
+        materialId:
+          type: integer
+        materialName:
+          type: string
+        quantityIssued:
+          type: number
+        quantityReceived:
+          type: number
+        date:
+          type: string
+        remarks:
+          type: string
+        createdAt:
+          type: string
+      required: [id, customerId, customerName, materialId, materialName, quantityIssued, quantityReceived, date, createdAt]
+
+    CreateProductionBody:
+      type: object
+      properties:
+        customerId:
+          type: integer
+        materialId:
+          type: integer
+        quantityIssued:
+          type: number
+        quantityReceived:
+          type: number
+        date:
+          type: string
+        remarks:
+          type: string
+      required: [customerId, materialId, quantityIssued, quantityReceived, date]
+
+    DeliveryChallanItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        materialId:
+          type: integer
+        materialName:
+          type: string
+        description:
+          type: string
+        quantity:
+          type: number
+        rate:
+          type: number
+        amount:
+          type: number
+      required: [id, materialId, materialName, quantity, rate, amount]
+
+    DeliveryChallan:
+      type: object
+      properties:
+        id:
+          type: integer
+        challanNumber:
+          type: string
+        customerId:
+          type: integer
+        customerName:
+          type: string
+        vehicleNumber:
+          type: string
+        date:
+          type: string
+        totalAmount:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeliveryChallanItem"
+        createdAt:
+          type: string
+      required: [id, challanNumber, customerId, customerName, vehicleNumber, date, totalAmount, items, createdAt]
+
+    CreateDeliveryChallanItemBody:
+      type: object
+      properties:
+        materialId:
+          type: integer
+        description:
+          type: string
+        quantity:
+          type: number
+        rate:
+          type: number
+      required: [materialId, quantity, rate]
+
+    CreateDeliveryChallanBody:
+      type: object
+      properties:
+        customerId:
+          type: integer
+        vehicleNumber:
+          type: string
+        date:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateDeliveryChallanItemBody"
+      required: [customerId, vehicleNumber, date, items]
+
+    MonthlyReport:
+      type: object
+      properties:
+        month:
+          type: integer
+        year:
+          type: integer
+        totalStockIn:
+          type: number
+        totalStockOut:
+          type: number
+        materialBalance:
+          type: number
+        totalSalaryPayable:
+          type: number
+        stockInByMaterial:
+          type: array
+          items:
+            type: object
+            properties:
+              materialId:
+                type: integer
+              materialName:
+                type: string
+              totalQty:
+                type: number
+            required: [materialId, materialName, totalQty]
+        stockOutByMaterial:
+          type: array
+          items:
+            type: object
+            properties:
+              materialId:
+                type: integer
+              materialName:
+                type: string
+              totalQty:
+                type: number
+            required: [materialId, materialName, totalQty]
+        customerSummary:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerSummary"
+        salaryReport:
+          type: array
+          items:
+            $ref: "#/components/schemas/SalaryReportItem"
+      required:
+        - month
+        - year
+        - totalStockIn
+        - totalStockOut
+        - materialBalance
+        - totalSalaryPayable
+        - stockInByMaterial
+        - stockOutByMaterial
+        - customerSummary
+        - salaryReport

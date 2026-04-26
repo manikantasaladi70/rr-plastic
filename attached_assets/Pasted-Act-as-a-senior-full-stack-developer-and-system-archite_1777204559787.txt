@@ -1,0 +1,229 @@
+Act as a senior full-stack developer and system architect.
+
+Build and upgrade my RR Plastic Management System into a complete production-ready web application with frontend, backend, database, authentication, and reporting.
+
+---
+
+## 🔹 FRONTEND REQUIREMENTS
+
+* Clean, modern, responsive UI (mobile + desktop)
+* Dashboard with:
+
+  * Total stock
+  * Today stock in/out
+  * Low stock alerts
+  * Attendance summary
+* Modules:
+
+  1. Materials
+  2. Stock In
+  3. Stock Out
+  4. Employees
+  5. Attendance
+  6. Salary
+  7. Customers
+  8. Production
+  9. Delivery Challan (DC)
+  10. Reports
+
+---
+
+## 🔹 EMPLOYEE & SALARY SYSTEM
+
+* Each employee must have:
+
+  * Name
+  * Role
+  * Phone
+  * Daily salary (important)
+* Attendance types:
+
+  * Present (P)
+  * Absent (A)
+  * Half Day (H)
+  * Leave (L)
+* Salary calculation:
+  salary = (Present × full salary) + (Half Day × 0.5 × salary)
+* Monthly salary report must include:
+
+  * Total days
+  * Present
+  * Half days
+  * Final salary payable
+
+---
+
+## 🔹 CUSTOMER & PRODUCTION
+
+* Customer details:
+
+  * Name, Phone, GST
+* Track:
+
+  * Material given to customer
+  * Production received from customer
+* Show:
+
+  * Total material issued
+  * Total production received
+  * Balance
+
+---
+
+## 🔹 DELIVERY CHALLAN (DC)
+
+* Create DC with:
+
+  * Customer
+  * Vehicle number
+  * Date
+  * Multiple items
+* Features:
+
+  * Add/edit/delete items
+  * Auto calculation of amount
+  * Print option
+  * PDF download
+
+---
+
+## 🔹 REPORTS
+
+* Monthly report must include:
+
+  * Stock In
+  * Stock Out
+  * Material balance
+  * Employee salary
+  * Customer summary
+* Export options:
+
+  * PDF download
+  * Print
+
+---
+
+## 🔹 BACKEND REQUIREMENTS
+
+Build a REST API backend using:
+
+Option A (recommended):
+
+* Node.js + Express
+
+OR
+
+Option B:
+
+* Python + Django / Flask
+
+Backend must include:
+
+1. Authentication APIs
+
+   * Login (JWT based)
+   * Role-based access (Admin, Store)
+
+2. CRUD APIs for:
+
+   * Materials
+   * Stock In / Stock Out
+   * Employees
+   * Attendance
+   * Customers
+   * Production
+   * Delivery Challan
+
+3. Business Logic:
+
+   * Prevent stock out if insufficient quantity
+   * Auto update stock levels
+   * Salary calculation from attendance
+   * Customer balance calculation
+
+4. Report APIs:
+
+   * Monthly aggregated data
+   * Salary report
+   * Stock summary
+
+---
+
+## 🔹 DATABASE DESIGN
+
+Use:
+
+Option A:
+
+* MongoDB (NoSQL)
+
+OR
+
+Option B:
+
+* PostgreSQL (SQL)
+
+Tables / Collections:
+
+* users
+* materials
+* stock_in
+* stock_out
+* employees
+* attendance
+* customers
+* production
+* delivery_challans
+
+Ensure:
+
+* Proper relationships
+* Indexing for performance
+* Data validation
+
+---
+
+## 🔹 SECURITY
+
+* JWT authentication
+* Password hashing (bcrypt)
+* Input validation
+* API protection
+
+---
+
+## 🔹 DEPLOYMENT
+
+* Frontend: Netlify / Vercel
+* Backend: Render / Railway / VPS
+* Database: MongoDB Atlas / Supabase
+
+---
+
+## 🔹 EXTRA FEATURES
+
+* Low stock alerts
+* Search & filters
+* Edit/Delete for all modules
+* Error handling
+* Loading states
+
+---
+
+## 🔹 OUTPUT REQUIRED
+
+* Full working frontend code
+* Full backend code
+* Database schema
+* API endpoints list
+* Setup instructions:
+
+  * How to run locally
+  * How to deploy
+  * How to access from mobile & laptop via login
+
+Ensure:
+
+* No runtime errors
+* Clean, modular code
+* Production-ready architecture
