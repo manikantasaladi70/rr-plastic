@@ -7,7 +7,7 @@ const router = Router();
 
 router.get("/monthly", requireAuth, async (req, res) => {
   const month = parseInt(req.query.month as string);
-  const year = parseInt(req.query.year as string);
+  const year  = parseInt(req.query.year  as string);
   if (!month || !year) {
     res.status(400).json({ error: "month and year required" });
     return;
@@ -15,9 +15,10 @@ router.get("/monthly", requireAuth, async (req, res) => {
 
   const monthCondition = (dateField: any) => and(
     sql`EXTRACT(MONTH FROM ${dateField}::date) = ${month}`,
-    sql`EXTRACT(YEAR FROM ${dateField}::date) = ${year}`,
+    sql`EXTRACT(YEAR  FROM ${dateField}::date) = ${year}`,
   );
 
+  // ── Stock totals ──────────────────────────────────────────────────────────
   const [stockInTotal] = await db
     .select({ total: sql<number>`coalesce(sum(quantity::numeric), 0)` })
     .from(stockInTable)
@@ -28,11 +29,12 @@ router.get("/monthly", requireAuth, async (req, res) => {
     .from(stockOutTable)
     .where(monthCondition(stockOutTable.date));
 
+  // ── Stock by material ─────────────────────────────────────────────────────
   const stockInByMaterial = await db
     .select({
-      materialId: stockInTable.materialId,
+      materialId:   stockInTable.materialId,
       materialName: materialsTable.name,
-      totalQty: sql<number>`coalesce(sum(${stockInTable.quantity}::numeric), 0)`,
+      totalQty:     sql<number>`coalesce(sum(${stockInTable.quantity}::numeric), 0)`,
     })
     .from(stockInTable)
     .leftJoin(materialsTable, eq(stockInTable.materialId, materialsTable.id))
@@ -41,67 +43,93 @@ router.get("/monthly", requireAuth, async (req, res) => {
 
   const stockOutByMaterial = await db
     .select({
-      materialId: stockOutTable.materialId,
+      materialId:   stockOutTable.materialId,
       materialName: materialsTable.name,
-      totalQty: sql<number>`coalesce(sum(${stockOutTable.quantity}::numeric), 0)`,
+      totalQty:     sql<number>`coalesce(sum(${stockOutTable.quantity}::numeric), 0)`,
     })
     .from(stockOutTable)
     .leftJoin(materialsTable, eq(stockOutTable.materialId, materialsTable.id))
     .where(monthCondition(stockOutTable.date))
     .groupBy(stockOutTable.materialId, materialsTable.name);
 
-  const employees = await db.select().from(employeesTable).where(eq(employeesTable.isActive, true));
+  // ── Salary report with SD (Sunday Double) support ─────────────────────────
+  const employees = await db
+    .select()
+    .from(employeesTable)
+    .where(eq(employeesTable.isActive, true));
+
   const daysInMonth = new Date(year, month, 0).getDate();
+
   const attendanceRecords = await db
     .select()
     .from(attendanceTable)
     .where(monthCondition(attendanceTable.date));
 
   let totalSalaryPayable = 0;
+
   const salaryReport = employees.map(emp => {
     const empAttendance = attendanceRecords.filter(a => a.employeeId === emp.id);
+
     const presentDays = empAttendance.filter(a => a.status === "P").length;
-    const halfDays = empAttendance.filter(a => a.status === "H").length;
-    const leaveDays = empAttendance.filter(a => a.status === "L").length;
-    const absentDays = empAttendance.filter(a => a.status === "A").length;
+    const halfDays    = empAttendance.filter(a => a.status === "H").length;
+    const leaveDays   = empAttendance.filter(a => a.status === "L").length;
+    const absentDays  = empAttendance.filter(a => a.status === "A").length;
+    const sundayDays  = empAttendance.filter(a => a.status === "SD").length;
+
     const salary = Number(emp.dailySalary);
-    const finalSalary = (presentDays * salary) + (halfDays * 0.5 * salary);
+
+    // P  = 1x  |  H = 0.5x  |  SD = 2x  |  A/L = 0
+    const finalSalary =
+      (presentDays * salary) +
+      (halfDays    * 0.5 * salary) +
+      (sundayDays  * 2   * salary);
+
     totalSalaryPayable += finalSalary;
+
     return {
-      employeeId: emp.id,
+      employeeId:   emp.id,
       employeeName: emp.name,
-      role: emp.role,
-      dailySalary: salary,
-      totalDays: daysInMonth,
+      role:         emp.role,
+      dailySalary:  salary,
+      totalDays:    daysInMonth,
       presentDays,
       halfDays,
+      sundayDays,
       absentDays,
       leaveDays,
       finalSalary: Math.round(finalSalary * 100) / 100,
     };
   });
 
+  // ── Customer summary ──────────────────────────────────────────────────────
   const customers = await db.select().from(customersTable);
+
   const customerSummary = await Promise.all(customers.map(async (cust) => {
     const [totals] = await db
       .select({
-        totalIssued: sql<number>`coalesce(sum(quantity_issued::numeric), 0)`,
+        totalIssued:   sql<number>`coalesce(sum(quantity_issued::numeric),   0)`,
         totalReceived: sql<number>`coalesce(sum(quantity_received::numeric), 0)`,
       })
       .from(productionTable)
-      .where(and(eq(productionTable.customerId, cust.id), monthCondition(productionTable.date)));
-    const totalMaterialIssued = Number(totals.totalIssued) || 0;
+      .where(and(
+        eq(productionTable.customerId, cust.id),
+        monthCondition(productionTable.date),
+      ));
+
+    const totalMaterialIssued    = Number(totals.totalIssued)   || 0;
     const totalProductionReceived = Number(totals.totalReceived) || 0;
+
     return {
-      customerId: cust.id,
-      customerName: cust.name,
+      customerId:              cust.id,
+      customerName:            cust.name,
       totalMaterialIssued,
       totalProductionReceived,
       balance: totalMaterialIssued - totalProductionReceived,
     };
   }));
 
-  const totalStockIn = Number(stockInTotal.total) || 0;
+  // ── Response ──────────────────────────────────────────────────────────────
+  const totalStockIn  = Number(stockInTotal.total)  || 0;
   const totalStockOut = Number(stockOutTotal.total) || 0;
 
   res.json({
@@ -109,10 +137,18 @@ router.get("/monthly", requireAuth, async (req, res) => {
     year,
     totalStockIn,
     totalStockOut,
-    materialBalance: totalStockIn - totalStockOut,
+    materialBalance:    totalStockIn - totalStockOut,
     totalSalaryPayable: Math.round(totalSalaryPayable * 100) / 100,
-    stockInByMaterial: stockInByMaterial.map(i => ({ ...i, materialName: i.materialName || "", totalQty: Number(i.totalQty) })),
-    stockOutByMaterial: stockOutByMaterial.map(i => ({ ...i, materialName: i.materialName || "", totalQty: Number(i.totalQty) })),
+    stockInByMaterial:  stockInByMaterial.map(i => ({
+      ...i,
+      materialName: i.materialName || "",
+      totalQty:     Number(i.totalQty),
+    })),
+    stockOutByMaterial: stockOutByMaterial.map(i => ({
+      ...i,
+      materialName: i.materialName || "",
+      totalQty:     Number(i.totalQty),
+    })),
     customerSummary,
     salaryReport,
   });

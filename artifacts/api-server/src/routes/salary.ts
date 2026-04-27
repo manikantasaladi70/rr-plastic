@@ -28,21 +28,36 @@ router.get("/report", requireAuth, async (req, res) => {
 
   const report = employees.map(emp => {
     const empAttendance = attendanceRecords.filter(a => a.employeeId === emp.id);
-    const presentDays = empAttendance.filter(a => a.status === "P").length;
-    const halfDays = empAttendance.filter(a => a.status === "H").length;
-    const leaveDays = empAttendance.filter(a => a.status === "L").length;
-    const absentDays = empAttendance.filter(a => a.status === "A").length;
-    const salary = Number(emp.dailySalary);
-    const finalSalary = (presentDays * salary) + (halfDays * 0.5 * salary);
 
+    const presentDays   = empAttendance.filter(a => a.status === "P").length;
+    const halfDays      = empAttendance.filter(a => a.status === "H").length;
+    const leaveDays     = empAttendance.filter(a => a.status === "L").length;
+    const absentDays    = empAttendance.filter(a => a.status === "A").length;
+    const sundayDays    = empAttendance.filter(a => a.status === "SD").length;
+
+    const salary = Number(emp.dailySalary);
+
+    // Formula:
+    // Present (P)       = 1x daily salary
+    // Half Day (H)      = 0.5x daily salary
+    // Sunday Double(SD) = 2x daily salary
+    // Absent (A)        = 0
+    // Leave (L)         = 0
+   const finalSalary =
+  (presentDays * salary) +
+  (halfDays    * 0.5 * salary) +
+  (sundayDays  * 2   * salary) +
+  (leaveDays   * 1   * salary);
+  
     return {
-      employeeId: emp.id,
+      employeeId:   emp.id,
       employeeName: emp.name,
-      role: emp.role,
-      dailySalary: salary,
-      totalDays: daysInMonth,
+      role:         emp.role,
+      dailySalary:  salary,
+      totalDays:    daysInMonth,
       presentDays,
       halfDays,
+      sundayDays,
       absentDays,
       leaveDays,
       finalSalary: Math.round(finalSalary * 100) / 100,

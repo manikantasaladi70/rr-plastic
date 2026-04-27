@@ -3,6 +3,13 @@ import { db, employeesTable } from "@workspace/db";
 import { eq, ilike } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 
+// FIX: import all tables that reference employeeId so we can delete them first
+import {
+  attendanceTable,
+  // add any other tables that reference employeeId, e.g:
+  // salaryRecordsTable,
+} from "@workspace/db";
+
 const router = Router();
 
 router.get("/", requireAuth, async (req, res) => {
@@ -42,10 +49,33 @@ router.put("/:id", requireAuth, async (req, res) => {
   res.json({ ...item, dailySalary: Number(item.dailySalary) });
 });
 
+// FIX: delete all related records first, then delete the employee
 router.delete("/:id", requireAuth, async (req, res) => {
   const id = parseInt(req.params.id);
-  await db.delete(employeesTable).where(eq(employeesTable.id, id));
-  res.status(204).send();
+
+  try {
+    // Step 1: delete attendance records for this employee
+    await db.delete(attendanceTable).where(eq(attendanceTable.employeeId, id));
+
+    // Step 2: if you have salary records table, delete those too:
+    // await db.delete(salaryRecordsTable).where(eq(salaryRecordsTable.employeeId, id));
+
+    // Step 3: now safely delete the employee
+    const result = await db
+      .delete(employeesTable)
+      .where(eq(employeesTable.id, id))
+      .returning();
+
+    if (!result.length) {
+      res.status(404).json({ error: "Employee not found" });
+      return;
+    }
+
+    res.status(204).send();
+  } catch (err) {
+    console.error("Delete employee error:", err);
+    res.status(500).json({ error: "Failed to delete employee" });
+  }
 });
 
 export default router;
